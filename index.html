@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#234c40">
+  <title>Audioguide Schloss Castel Wolfsthurn</title>
+  <style>
+    :root {
+      --green: #234c40;
+      --green-dark: #19382f;
+      --green-soft: #eef5f2;
+      --gold: #9a7141;
+      --background: #f4f0e8;
+      --text: #292524;
+      --muted: #6b625b;
+      --line: #e5e0da;
+      --white: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top right, rgba(146,107,61,.15), transparent 38%),
+        radial-gradient(circle at bottom left, rgba(42,75,65,.12), transparent 36%),
+        var(--background);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, input, audio { font: inherit; }
+    button { cursor: pointer; }
+
+    .app {
+      width: min(100%, 520px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .hero {
+      position: relative;
+      z-index: 2;
+      margin-bottom: -12px;
+      padding: 16px 20px;
+      border-radius: 20px;
+      background: var(--green);
+      color: var(--white);
+      box-shadow: 0 12px 28px rgba(35, 76, 64, .20);
+    }
+
+    .castle-name {
+      margin: 0 0 10px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.9);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(22px, 6.1vw, 27px);
+      line-height: 1.14;
+      letter-spacing: -.01em;
+    }
+
+    .hero h1 span { display: block; }
+
+    .language-card {
+      position: relative;
+      z-index: 1;
+      padding: 29px 20px 20px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.95);
+      box-shadow: 0 10px 25px rgba(58, 48, 40, .13);
+    }
+
+    .language-heading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #4d4742;
+    }
+
+    .globe { color: var(--gold); }
+    .language-list { display: grid; gap: 8px; }
+
+    .language-button {
+      display: flex;
+      min-height: 50px;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--white);
+      color: var(--text);
+      text-align: left;
+      transition: border-color .15s, background .15s, transform .15s;
+    }
+
+    .language-button:hover { transform: translateY(-1px); }
+
+    .language-button.active {
+      border-color: var(--green);
+      background: var(--green-soft);
+      box-shadow: inset 0 0 0 1px var(--green);
+    }
+
+    .language-name { font-weight: 700; }
+
+    .language-mark {
+      display: grid;
+      width: 30px;
+      height: 30px;
+      place-items: center;
+      border-radius: 50%;
+      background: #f4f4f2;
+      color: #76716c;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .language-button.active .language-mark {
+      background: var(--green);
+      color: var(--white);
+    }
+
+    .start-button {
+      display: flex;
+      min-height: 50px;
+      width: 100%;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 16px;
+      border: 0;
+      border-radius: 13px;
+      background: var(--green);
+      color: var(--white);
+      font-weight: 750;
+      box-shadow: 0 4px 10px rgba(35,76,64,.13);
+    }
+
+    .start-button:hover { background: var(--green-dark); }
+
+    .headphone-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 13px;
+      background: rgba(255,255,255,.68);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .headphones { color: var(--gold); font-size: 18px; }
+    .overview, .detail { display: none; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .topbar-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-weight: 750;
+    }
+
+    .topbar-icon {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border-radius: 11px;
+      background: var(--green);
+      color: white;
+    }
+
+    .small-button {
+      min-height: 38px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: white;
+      font-weight: 700;
+    }
+
+    .overview-hero, .detail-hero {
+      padding: 22px;
+      border-radius: 22px;
+      background: var(--green);
+      color: white;
+      box-shadow: 0 10px 24px rgba(35,76,64,.18);
+    }
+
+    .eyebrow {
+      margin: 0 0 5px;
+      color: #d5ebe4;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .overview-hero h1, .detail-hero h1 { margin: 0; }
+    .overview-hero p, .detail-hero p { color: #e5f2ee; line-height: 1.55; }
+
+    .search {
+      width: 100%;
+      min-height: 50px;
+      margin: 14px 0;
+      padding: 10px 15px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+    }
+
+    .station-list { display: grid; gap: 10px; }
+
+    .floor-heading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 22px 2px 4px;
+      color: var(--green);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 21px;
+      font-weight: 700;
+    }
+
+    .floor-heading:first-child { margin-top: 4px; }
+
+    .floor-heading::after {
+      content: "";
+      height: 1px;
+      flex: 1;
+      background: var(--line);
+    }
+
+    .station-card {
+      display: flex;
+      width: 100%;
+      gap: 13px;
+      align-items: center;
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: white;
+      text-align: left;
+      box-shadow: 0 3px 10px rgba(50,40,30,.05);
+    }
+
+    .station-number {
+      display: grid;
+      width: 52px;
+      height: 52px;
+      flex: 0 0 52px;
+      place-items: center;
+      border-radius: 14px;
+      background: var(--green-soft);
+      color: var(--green);
+      font-size: 18px;
+      font-weight: 850;
+    }
+
+    .station-title { display: block; font-weight: 780; }
+    .station-description { display: block; margin-top: 3px; color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .empty-message { color: var(--muted); line-height: 1.5; }
+
+    .back-button {
+      margin-bottom: 12px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .player { width: 100%; margin-top: 15px; }
+    .transcript { margin-top: 18px; line-height: 1.68; white-space: pre-line; }
+
+    .navigation {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .navigation button {
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: white;
+      font-weight: 750;
+    }
+
+    .navigation button:last-child {
+      border-color: var(--green);
+      background: var(--green);
+      color: white;
+    }
+
+    .navigation button:disabled { opacity: .4; cursor: default; }
+
+    @media (min-height: 720px) {
+      .app.start-mode { display: flex; flex-direction: column; justify-content: center; }
+    }
+
+    @media (max-height: 680px) {
+      .app { padding-top: 10px; padding-bottom: 10px; }
+      .hero { padding-top: 13px; padding-bottom: 13px; }
+      .language-card { padding-top: 25px; padding-bottom: 15px; }
+      .language-button { min-height: 45px; }
+      .start-button { min-height: 46px; margin-top: 12px; }
+      .headphone-note { margin-top: 10px; padding-top: 10px; padding-bottom: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <main id="app" class="app start-mode">
+    <section id="startScreen">
+      <div class="hero">
+        <p class="castle-name">Schloss Castel Wolfsthurn</p>
+        <h1><span>Herzlich willkommen!</span><span>Benvenuti!</span><span>Welcome!</span></h1>
+      </div>
+
+      <div class="language-card">
+        <p class="language-heading"><span class="globe">◎</span><span id="chooseLabel">Sprache wählen</span></p>
+        <div class="language-list">
+          <button class="language-button active" data-language="de"><span class="language-name">Deutsch</span><span class="language-mark">✓</span></button>
+          <button class="language-button" data-language="it"><span class="language-name">Italiano</span><span class="language-mark">IT</span></button>
+          <button class="language-button" data-language="en"><span class="language-name">English</span><span class="language-mark">EN</span></button>
+        </div>
+        <button id="startButton" class="start-button">Rundgang starten <span>›</span></button>
+      </div>
+
+      <div class="headphone-note"><span class="headphones" aria-hidden="true">🎧</span><span id="headphoneText">Bitte verwenden Sie nach Möglichkeit Kopfhörer.</span></div>
+    </section>
+
+    <section id="overview" class="overview">
+      <div class="topbar">
+        <div class="topbar-title"><span class="topbar-icon">◉</span><span id="guideLabel">Audioguide</span></div>
+        <button id="changeLanguage" class="small-button">DE</button>
+      </div>
+      <div class="overview-hero">
+        <p id="welcomeLabel" class="eyebrow">Willkommen</p>
+        <h1 id="allStopsLabel">Alle Stationen</h1>
+        <p id="introLabel">Wählen Sie eine Station im 1. oder 2. Stock aus.</p>
+      </div>
+      <input id="searchInput" class="search" type="search" placeholder="Stationsnummer oder Titel suchen">
+      <div id="stationList" class="station-list"></div>
+    </section>
+
+    <section id="detail" class="detail">
+      <button id="backButton" class="back-button">← Übersicht</button>
+      <div class="detail-hero">
+        <p id="stationLabel" class="eyebrow"></p>
+        <h1 id="detailTitle"></h1>
+        <p id="detailDescription"></p>
+      </div>
+      <audio id="audioPlayer" class="player" controls preload="metadata"></audio>
+      <p id="transcript" class="transcript"></p>
+      <nav class="navigation"><button id="previousButton">←</button><button id="nextButton">→</button></nav>
+    </section>
+  </main>
+
+  <script src="stations.js"></script>
+  <script>
+    const UI = {
+      de: {
+        choose: "Sprache wählen", start: "Rundgang starten",
+        headphones: "Bitte verwenden Sie nach Möglichkeit Kopfhörer.",
+        guide: "Audioguide", welcome: "Willkommen", allStops: "Alle Stationen",
+        intro: "Wählen Sie eine Station im 1. oder 2. Stock aus.",
+        search: "Stationsnummer oder Titel suchen", station: "Station", overview: "Übersicht",
+        firstFloor: "1. Stock", secondFloor: "2. Stock", noResults: "Keine passende Station gefunden."
+      },
+      it: {
+        choose: "Scegli la lingua", start: "Inizia la visita",
+        headphones: "Se possibile, utilizzate le cuffie.",
+        guide: "Audioguida", welcome: "Benvenuti", allStops: "Tutte le tappe",
+        intro: "Scegliete una tappa al primo o al secondo piano.",
+        search: "Cerca il numero o il titolo della tappa", station: "Tappa", overview: "Panoramica",
+        firstFloor: "1° piano", secondFloor: "2° piano", noResults: "Nessuna tappa trovata."
+      },
+      en: {
+        choose: "Choose a language", start: "Start the tour",
+        headphones: "Please use headphones whenever possible.",
+        guide: "Audio guide", welcome: "Welcome", allStops: "All stops",
+        intro: "Choose a stop on the first or second floor.",
+        search: "Search by stop number or title", station: "Stop", overview: "Overview",
+        firstFloor: "First floor", secondFloor: "Second floor", noResults: "No stops found."
+      }
+    };
+
+    let selectedLanguage = localStorage.getItem("wolfsthurn-language") || "de";
+    let currentStationIndex = 0;
+
+    const app = document.getElementById("app");
+    const startScreen = document.getElementById("startScreen");
+    const overview = document.getElementById("overview");
+    const detail = document.getElementById("detail");
+    const chooseLabel = document.getElementById("chooseLabel");
+    const startButton = document.getElementById("startButton");
+    const headphoneText = document.getElementById("headphoneText");
+    const guideLabel = document.getElementById("guideLabel");
+    const welcomeLabel = document.getElementById("welcomeLabel");
+    const allStopsLabel = document.getElementById("allStopsLabel");
+    const introLabel = document.getElementById("introLabel");
+    const searchInput = document.getElementById("searchInput");
+    const stationList = document.getElementById("stationList");
+    const changeLanguage = document.getElementById("changeLanguage");
+    const backButton = document.getElementById("backButton");
+    const stationLabel = document.getElementById("stationLabel");
+    const detailTitle = document.getElementById("detailTitle");
+    const detailDescription = document.getElementById("detailDescription");
+    const transcript = document.getElementById("transcript");
+    const audioPlayer = document.getElementById("audioPlayer");
+    const previousButton = document.getElementById("previousButton");
+    const nextButton = document.getElementById("nextButton");
+
+    function localized(field) {
+      return (field && (field[selectedLanguage] || field.de)) || "";
+    }
+
+    function applyLanguage() {
+      const text = UI[selectedLanguage];
+      document.documentElement.lang = selectedLanguage;
+      chooseLabel.textContent = text.choose;
+      startButton.innerHTML = `${text.start} <span>›</span>`;
+      headphoneText.textContent = text.headphones;
+      guideLabel.textContent = text.guide;
+      welcomeLabel.textContent = text.welcome;
+      allStopsLabel.textContent = text.allStops;
+      introLabel.textContent = text.intro;
+      searchInput.placeholder = text.search;
+      changeLanguage.textContent = selectedLanguage.toUpperCase();
+      backButton.textContent = `← ${text.overview}`;
+
+      document.querySelectorAll(".language-button").forEach(button => {
+        const active = button.dataset.language === selectedLanguage;
+        button.classList.toggle("active", active);
+        button.querySelector(".language-mark").textContent = active ? "✓" : button.dataset.language.toUpperCase();
+      });
+
+      renderStations(searchInput.value);
+      if (detail.style.display === "block") openStation(currentStationIndex);
+    }
+
+    function renderStations(filter = "") {
+      if (typeof STATIONS === "undefined") {
+        stationList.innerHTML = "<p>Die Datei stations.js wurde nicht gefunden.</p>";
+        return;
+      }
+
+      const term = filter.trim().toLowerCase();
+      stationList.innerHTML = "";
+
+      const matchingStations = STATIONS
+        .map((station, index) => ({ station, index }))
+        .filter(({ station }) => {
+          const title = localized(station.title).toLowerCase();
+          const number = String(station.id).padStart(2, "0");
+          return !term || title.includes(term) || number.includes(term);
+        });
+
+      const floors = [
+        { number: 1, title: UI[selectedLanguage].firstFloor },
+        { number: 2, title: UI[selectedLanguage].secondFloor }
+      ];
+
+      floors.forEach(floor => {
+        const floorStations = matchingStations.filter(({ station }) => station.floor === floor.number);
+        if (!floorStations.length) return;
+
+        const heading = document.createElement("h2");
+        heading.className = "floor-heading";
+        heading.textContent = floor.title;
+        stationList.appendChild(heading);
+
+        floorStations.forEach(({ station, index }) => {
+          const button = document.createElement("button");
+          button.className = "station-card";
+
+          const number = document.createElement("span");
+          number.className = "station-number";
+          number.textContent = String(station.id).padStart(2, "0");
+
+          const text = document.createElement("span");
+          const title = document.createElement("span");
+          title.className = "station-title";
+          title.textContent = localized(station.title);
+          text.appendChild(title);
+
+          const descriptionText = localized(station.description);
+          if (descriptionText) {
+            const description = document.createElement("span");
+            description.className = "station-description";
+            description.textContent = descriptionText;
+            text.appendChild(description);
+          }
+
+          button.append(number, text);
+          button.addEventListener("click", () => openStation(index));
+          stationList.appendChild(button);
+        });
+      });
+
+      if (!matchingStations.length) {
+        const message = document.createElement("p");
+        message.className = "empty-message";
+        message.textContent = UI[selectedLanguage].noResults;
+        stationList.appendChild(message);
+      }
+    }
+
+    function showOverview() {
+      app.classList.remove("start-mode");
+      startScreen.style.display = "none";
+      overview.style.display = "block";
+      detail.style.display = "none";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      renderStations(searchInput.value);
+    }
+
+    function openStation(index) {
+      currentStationIndex = index;
+      const station = STATIONS[index];
+      overview.style.display = "none";
+      detail.style.display = "block";
+      stationLabel.textContent = `${UI[selectedLanguage].station} ${String(station.id).padStart(2, "0")}`;
+      detailTitle.textContent = localized(station.title);
+      detailDescription.textContent = localized(station.description);
+      transcript.textContent = localized(station.transcript);
+
+      const audioSource = station.audio && station.audio[selectedLanguage] ? station.audio[selectedLanguage] : "";
+      audioPlayer.src = audioSource;
+      audioPlayer.style.display = audioSource ? "block" : "none";
+
+      previousButton.disabled = index === 0;
+      nextButton.disabled = index === STATIONS.length - 1;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    document.querySelectorAll(".language-button").forEach(button => {
+      button.addEventListener("click", () => {
+        selectedLanguage = button.dataset.language;
+        localStorage.setItem("wolfsthurn-language", selectedLanguage);
+        applyLanguage();
+      });
+    });
+
+    startButton.addEventListener("click", showOverview);
+    changeLanguage.addEventListener("click", () => {
+      overview.style.display = "none";
+      detail.style.display = "none";
+      startScreen.style.display = "block";
+      app.classList.add("start-mode");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    backButton.addEventListener("click", showOverview);
+    previousButton.addEventListener("click", () => openStation(currentStationIndex - 1));
+    nextButton.addEventListener("click", () => openStation(currentStationIndex + 1));
+    searchInput.addEventListener("input", event => renderStations(event.target.value));
+
+    applyLanguage();
+  </script>
+</body>
+</html>
